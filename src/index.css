@@ -1,50 +1,44 @@
-/* src/App.css */
-.App {
-  max-width: 600px;
-  margin: 0 auto;
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.login-container, .register-container {
+  width: 300px;
+  margin: auto;
   padding: 20px;
-  font-family: Arial, sans-serif;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  box-shadow: 2px 2px 12px rgba(0, 0, 0, 0.1);
 }
 
-h1 {
+h2 {
   text-align: center;
 }
 
 form {
-  margin-bottom: 20px;
+  display: flex;
+  flex-direction: column;
 }
 
-input, textarea {
-  width: 100%;
-  margin: 10px 0;
+input {
   padding: 10px;
-  border: 1px solid #ccc;
-  border-radius: 5px;
+  margin: 5px 0;
 }
 
 button {
-  background-color: #4CAF50;
-  color: white;
   padding: 10px;
+  background-color: #007bff;
+  color: white;
   border: none;
-  border-radius: 5px;
   cursor: pointer;
+  margin-top: 10px;
 }
 
 button:hover {
-  background-color: #45a049;
+  background-color: #0056b3;
 }
 
-ul {
-  list-style-type: none;
-  padding: 0;
-}
-
-li {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 10px;
-  border: 1px solid #ddd;
-  margin-bottom: 5px;
+.error {
+  color: red;
+  text-align: center;
 }
