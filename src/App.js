@@ -9,8 +9,8 @@ import EvaluateRule from './components/EvaluateRule';
 import ModifyRule from './components/ModifyRule';
 import Home from './components/Home';
 
-import LoginPage from './components/LoginPage';
-import RegisterPage from './components/RegisterPage';
+// import LoginPage from './components/LoginPage';
+// import RegisterPage from './components/RegisterPage';
 
 
 function App() {
@@ -21,8 +21,8 @@ function App() {
         <div className="container mx-auto px-4 py-8">
           <Routes>
           <Route path="/" element={<Home />} />
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/register" element={<RegisterPage />} />
+          {/* <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} /> */}
             <Route path="/create" element={<CreateRule />} />
             <Route path="/combine" element={<CombineRule />} />
             <Route path="/evaluate" element={<EvaluateRule />} />
