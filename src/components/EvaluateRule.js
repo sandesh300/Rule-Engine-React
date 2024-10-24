@@ -17,8 +17,6 @@ const EvaluateRulePage = () => {
   });
   const [showRuleDropdown, setShowRuleDropdown] = useState(false);
 
-  const departments = ['Sales', 'Marketing', 'IT', 'HR'];
-
   useEffect(() => {
     fetchRules();
   }, []);
@@ -46,8 +44,8 @@ const EvaluateRulePage = () => {
       errors.push('Age must be a valid number');
     }
     
-    if (!departments.includes(userData.department)) {
-      errors.push('Please select a valid department');
+    if (!userData.department.trim()) {
+      errors.push('Please enter a department');
     }
     
     if (!userData.salary || isNaN(userData.salary)) {
@@ -203,17 +201,14 @@ const EvaluateRulePage = () => {
               <label className="block text-sm font-medium mb-2">
                 Department
               </label>
-              <select
+              <input
+                type="text"
                 name="department"
                 value={userData.department}
                 onChange={handleInputChange}
                 className="w-full px-3 py-2 border rounded-md"
-              >
-                <option value="">Select department</option>
-                {departments.map(dept => (
-                  <option key={dept} value={dept}>{dept}</option>
-                ))}
-              </select>
+                placeholder="Enter department name"
+              />
             </div>
 
             <div>
