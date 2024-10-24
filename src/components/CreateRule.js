@@ -13,27 +13,60 @@ const CreateRulePage = () => {
   const validateRule = (rule) => {
     if (!rule) return false;
 
-    // Check for balanced parentheses
-    let balance = 0;
-    for (const char of rule) {
-      if (char === '(') balance++;
-      if (char === ')') balance--;
-      if (balance < 0) return false;
+    try {
+      // Remove extra spaces
+      let cleanRule = rule.replace(/\s+/g, ' ').trim();
+      
+      // Check for balanced parentheses
+      let balance = 0;
+      for (const char of cleanRule) {
+        if (char === '(') balance++;
+        if (char === ')') balance--;
+        if (balance < 0) return false;
+      }
+      if (balance !== 0) return false;
+
+      // Split the rule into conditions
+      const conditions = cleanRule.split(/AND|OR/).map(condition => condition.trim());
+
+      // Validate each condition
+      const validAttributes = ['age', 'department', 'salary', 'experience'];
+      const operatorRegex = /[><=]+/;
+      
+      for (let condition of conditions) {
+        // Remove surrounding parentheses for validation
+        condition = condition.replace(/^\(+|\)+$/g, '').trim();
+        
+        // Skip empty conditions
+        if (!condition) continue;
+
+        // Check if condition contains a valid attribute
+        const hasValidAttribute = validAttributes.some(attr => 
+          condition.toLowerCase().includes(attr.toLowerCase())
+        );
+        
+        // Check if condition contains an operator
+        const hasOperator = operatorRegex.test(condition);
+
+        if (!hasValidAttribute || !hasOperator) {
+          return false;
+        }
+
+        // Validate string values are properly quoted
+        if (condition.includes("'")) {
+          const matches = condition.match(/'([^']+)'/g);
+          if (!matches) return false;
+        }
+      }
+
+      // Verify logical operators
+      const hasLogicalOperators = /AND|OR/.test(cleanRule);
+      if (!hasLogicalOperators && conditions.length > 1) return false;
+
+      return true;
+    } catch (error) {
+      return false;
     }
-    if (balance !== 0) return false;
-
-    // Check for required operators
-    if (!rule.includes('AND') && !rule.includes('OR')) return false;
-
-    // Check for comparison operators
-    if (!rule.includes('>') && !rule.includes('<') && !rule.includes('=')) return false;
-
-    // Basic attribute validation
-    const validAttributes = ['age', 'department', 'salary', 'experience'];
-    const hasValidAttribute = validAttributes.some(attr => rule.includes(attr));
-    if (!hasValidAttribute) return false;
-
-    return true;
   };
 
   const handleInputChange = (e) => {
@@ -43,6 +76,15 @@ const CreateRulePage = () => {
       [name]: value
     }));
     setValidationError('');
+  };
+
+  const formatRuleString = (ruleString) => {
+    // Clean up extra spaces and standardize formatting
+    return ruleString
+      .replace(/\s+/g, ' ')
+      .replace(/\(\s+/g, '(')
+      .replace(/\s+\)/g, ')')
+      .trim();
   };
 
   const handleSubmit = async (e) => {
@@ -55,7 +97,9 @@ const CreateRulePage = () => {
       return;
     }
 
-    if (!validateRule(formData.ruleString)) {
+    const formattedRule = formatRuleString(formData.ruleString);
+    
+    if (!validateRule(formattedRule)) {
       setValidationError('Invalid rule format. Please check the syntax and try again.');
       return;
     }
@@ -68,7 +112,10 @@ const CreateRulePage = () => {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          ...formData,
+          ruleString: formattedRule,
+        }),
       });
 
       const data = await response.json();
@@ -132,8 +179,11 @@ const CreateRulePage = () => {
               onChange={handleInputChange}
               rows={4}
               className="w-full px-3 py-2 border rounded-md"
-              placeholder="Enter rule expression (e.g., (age > 30 AND department = 'Sales') OR (experience > 5))"
+              placeholder="Example: (age > 30 AND department = 'Marketing') AND (salary > 20000 OR experience > 5)"
             />
+            <p className="mt-2 text-sm text-gray-600">
+              Valid attributes: age, department, salary, experience
+            </p>
           </div>
 
           <button
