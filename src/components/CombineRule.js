@@ -98,9 +98,6 @@ const CombineRulesPage = () => {
           />
           <div className="flex-1">
             <h3 className="font-medium">{rule.ruleName}</h3>
-            <p className="text-sm text-gray-600 mt-1">
-              Created: {new Date(rule.createdAt).toLocaleDateString()}
-            </p>
           </div>
         </div>
       </div>
