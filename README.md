@@ -1,70 +1,282 @@
-# Getting Started with Create React App
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+# Rule Engine with Abstract Syntax Tree
 
-## Available Scripts
+A rule engine application that uses Abstract Syntax Tree (AST) to create, evaluate, and manage complex business rules. The system supports dynamic rule creation, combination, and modification with a focus on user attribute evaluation.
 
-In the project directory, you can run:
+## 🚀 Features
 
-### `npm start`
+- Create complex rules using logical operators (AND/OR)
+- Evaluate user data against defined rules
+- Combine multiple rules into a single rule
+- Modify existing rules
+- Visualize rules as Abstract Syntax Trees
+- RESTful API for rule management
+- React-based UI for rule visualization and management
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+## 🛠 Technology Stack
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+### Backend
+- Java 17
+- Spring Boot 3.1.0
+- PostgreSQL 15
+- JUnit 5
+- Mockito
+- Spring Data JPA
 
-### `npm test`
+### Frontend
+- React 18
+- TypeScript
+- Tailwind CSS
+- Axios
+- React Query
+- React Flow (for AST visualization)
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+## 📋 Prerequisites
 
-### `npm run build`
+- Java 17 or higher
+- Node.js 18 or higher
+- PostgreSQL 15
+- Maven 3.8+
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+## 🏗 Project Structure
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+```
+rule-engine/
+├── backend/
+│   ├── src/
+│   │   ├── main/
+│   │   │   ├── java/com/ruleengine/
+│   │   │   │   ├── controller/
+│   │   │   │   │   ├── RuleController.java
+│   │   │   │   ├── service/
+│   │   │   │   │   ├── RuleServices.java
+│   │   │   │   ├── model/
+│   │   │   │   │   ├── Node.java
+│   │   │   │   │   ├── Rule.java
+│   │   │   │   ├── repository/
+│   │   │   │   │   ├── RuleRepository.java
+│   │   │   │   └── exception/
+│   │   │   │       ├── GlobalHandlerException.java
+│   │   │   │       ├── CustomException.java
+│   │   │   └── resources/
+│   │   │        ├── application.properties
+│   │   └── test/
+│   │       ├── RuleServiceTest.java
+│   └── pom.xml
+├── frontend/
+│   ├── src/
+│   │   ├── components/
+│   │         ├── CombineRule.js
+│   │         ├── CreateRule.js
+│   │         ├── EvaluateRule.js
+│   │         ├── Home.js
+│   │         ├── ModifyRule.js
+│   │         ├── Navbar.js
+│   │  
+│   ├── package.json
+│   └── tsconfig.json
+└── README.md
+```
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+## 🔧 Installation & Setup
 
-### `npm run eject`
+### Backend Setup
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+1. Clone the repository:
+```bash
+git clone https://github.com/sandesh300/Rule-Engine-React.git
+cd rule-engine-ui
+```
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+2. Configure PostgreSQL:
+```properties
+# application.properties
+spring.datasource.url=jdbc:postgresql://localhost:5432/rule_engine
+spring.datasource.username=your_username
+spring.datasource.password=your_password
+spring.datasource.driver-class-name=org.postgresql.Driver
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+spring.jpa.database=postgresql
+spring.jpa.database-platform=org.hibernate.dialect.PostgreSQLDialect
+spring.jpa.hibernate.ddl-auto=update
+spring.jpa.properties.hibernate.format_sql=true
+spring.jpa.show-sql=false
+```
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+3. Build and run the application:
+```bash
+mvn clean install
+mvn spring-boot:run
+```
 
-## Learn More
+### Frontend Setup
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+1. Navigate to the frontend directory:
+```bash
+cd rule-engine-ui
+```
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+2. Install dependencies:
+```bash
+npm install
+```
 
-### Code Splitting
+3. Start the development server:
+```bash
+npm start
+```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+## 🎯 API Endpoints
 
-### Analyzing the Bundle Size
+### Rule Management
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+```
+POST   /api/rules/create          - Create a new rule
+GET    /api/rules/getRules        - Get all rules
+PUT    /api/rules/modify          - Modify existing rule
+DELETE /api/rules/delete          - Delete a rule
+POST   /api/rules/evaluate        - Evaluate data against a rule
+POST   /api/rules/combine         - Combine multiple rules
+```
 
-### Making a Progressive Web App
+### Backend REST APIs Documentation Link
+[Backend REST APIs Documentation](https://walnut-wrist-9da.notion.site/Rule-Engine-with-AST-129a272bc3e580c0ac0cfc7f01e5c221)
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+## 🎨 Design Choices
 
-### Advanced Configuration
+### Abstract Syntax Tree (AST)
+- Nodes represent operators (AND/OR) and operands (conditions)
+- Binary tree structure for efficient rule evaluation
+- Node structure:
+  ```java
+  class Node {
+      String type;        // "operator" or "operand"
+      Node left;          // Left child
+      Node right;         // Right child
+      String value;       // Operator or condition value
+  }
+  ```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+### Database Schema
+```sql
+CREATE TABLE rules (
+    id BIGSERIAL PRIMARY KEY,
+    rule_name VARCHAR(255) NOT NULL,
+    root_node JSONB NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+```
 
-### Deployment
+### Rule Combination Strategy
+- AND operator for combining multiple rules
+- Preserves individual rule integrity
+- Optimizes for evaluation performance
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+## 🧪 Testing
 
-### `npm run build` fails to minify
+### Test Coverage
+- Unit tests for services and controllers
+- Integration tests for API endpoints
+- Frontend component tests
+- End-to-end testing for critical flows
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+### Test Cases Documentation Link
+[Test Cases Documentation](https://walnut-wrist-9da.notion.site/Rule-Engine-using-AST-Test-Cases-129a272bc3e580a082e9c45cc99ccc51)
+
+### Running Tests
+
+Backend:
+```bash
+cd backend
+mvn test
+```
+
+Frontend:
+```bash
+cd frontend
+npm test
+```
+
+## ⚠️ Validation & Error Handling
+
+### Rule String Validation
+- Syntax validation for rule strings
+- Parentheses balance checking
+- Operator validation
+- Data type compatibility checks
+
+### User Data Validation
+- Required field validation
+- Data type validation
+- Value range validation
+- Department catalog validation
+
+### Error Response Format
+```json
+{
+    "error": "Error message",
+    "details": "Additional error details",
+    "timestamp": "2024-10-24T10:00:00Z"
+}
+```
+
+### Validation Error Handling Link
+[Validation Error Handling](https://walnut-wrist-9da.notion.site/Rule-Engine-using-AST-Validation-Error-Handling-129a272bc3e580bb9a1acd849dee8eb7)
+
+## 📦 Dependencies
+
+### Backend Dependencies
+```xml
+<dependencies>
+    <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-web</artifactId>
+    </dependency>
+    <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-data-jpa</artifactId>
+    </dependency>
+    <dependency>
+        <groupId>org.postgresql</groupId>
+        <artifactId>postgresql</artifactId>
+    </dependency>
+    <dependency>
+        <groupId>org.projectlombok</groupId>
+        <artifactId>lombok</artifactId>
+    </dependency>
+    <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-test</artifactId>
+        <scope>test</scope>
+    </dependency>
+    <dependency>
+        <groupId>org.mockito</groupId>
+        <artifactId>mockito-core</artifactId>
+        <version>5.11.0</version>
+        <scope>test</scope>
+    </dependency>
+    <dependency>
+        <groupId>org.junit.jupiter</groupId>
+        <artifactId>junit-jupiter-api</artifactId>
+        <version>5.10.3</version> <!-- Or any latest stable version -->
+        <scope>test</scope>
+    </dependency>
+</dependencies>
+```
+
+### Frontend Dependencies
+```json
+{
+    "dependencies": {
+        "react": "^18.2.0",
+        "react-dom": "^18.2.0",
+        "axios": "^1.6.0",
+        "react-query": "^3.39.3",
+        "reactflow": "^11.10.1",
+        "tailwindcss": "^3.3.5"
+    }
+}
+```
+
+---
+
