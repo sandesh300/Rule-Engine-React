@@ -1,12 +1,36 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
 import { toast } from 'react-toastify';
-import { Pencil, Trash2 } from 'lucide-react';
+import { Pencil, Trash2, AlertCircle, CheckCircle2, Loader2, X, Save, RotateCcw } from 'lucide-react';
 
-const ModifyRule = () => {
+const ModifyRulesPage = () => {
   const [rules, setRules] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState('');
   const [editingRule, setEditingRule] = useState(null);
-  const [newExpression, setNewExpression] = useState('');
+  const [deleteConfirm, setDeleteConfirm] = useState(null);
+  const [editedExpression, setEditedExpression] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Improved AST to string conversion
+  const convertASTToString = (node) => {
+    if (!node) return '';
+    
+    // For leaf nodes (operands)
+    if (node.type === 'operand') {
+      return node.value || '';
+    }
+    
+    // For operator nodes (AND/OR)
+    const left = convertASTToString(node.left);
+    const right = convertASTToString(node.right);
+    
+    // Only add parentheses if it's not a leaf node
+    if (left && right) {
+      return `${left} ${node.value} ${right}`;
+    }
+    
+    return '';
+  };
 
   useEffect(() => {
     fetchRules();
@@ -14,162 +38,255 @@ const ModifyRule = () => {
 
   const fetchRules = async () => {
     try {
-      const response = await axios.get('http://localhost:8080/api/rules/getRules');
-      setRules(response.data);
+      const response = await fetch('http://localhost:8080/api/rules/getRules');
+      if (!response.ok) {
+        throw new Error('Failed to fetch rules');
+      }
+      const data = await response.json();
+      
+      // Process the rules to include expression strings
+      const processedRules = data.rules.map(rule => {
+        const expression = convertASTToString(rule.rootNode);
+        return {
+          ...rule,
+          ruleExpression: expression
+        };
+      });
+      
+      setRules(processedRules);
     } catch (error) {
       toast.error('Failed to fetch rules: ' + error.message);
+      setError('Failed to load rules. Please try again later.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const handleModify = async (ruleId) => {
+  const validateRule = (rule) => {
+    if (!rule) return false;
+
+    // Rule must include at least one logical operator and one comparison
+    if (!rule.includes('AND') && !rule.includes('OR')) return false;
+    if (!rule.includes('>') && !rule.includes('<') && !rule.includes('=')) return false;
+
+    // Check for valid attributes
+    const validAttributes = ['age', 'department', 'salary', 'experience'];
+    const hasValidAttribute = validAttributes.some(attr => rule.includes(attr));
+    
+    return hasValidAttribute;
+  };
+
+  const handleEdit = (rule) => {
+    setEditingRule(rule);
+    setEditedExpression(rule.ruleExpression);
+    setError('');
+  };
+
+  const handleUpdate = async () => {
+    if (!validateRule(editedExpression)) {
+      setError('Invalid rule format. Please check the syntax and try again.');
+      return;
+    }
+
+    setIsSubmitting(true);
     try {
-      // Create the request body with both ruleString and ruleName
-      const requestBody = {
-        ruleString: newExpression
-      };
+      const response = await fetch(`http://localhost:8080/api/rules/modify?ruleId=${editingRule.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'text/plain',
+        },
+        body: editedExpression,
+      });
 
-      const response = await axios.put(
-        `http://localhost:8080/api/rules/modify?ruleId=${ruleId}`, 
-        requestBody,
-        {
-          headers: {
-            'Content-Type': 'application/json'
-          }
-        }
-      );
-
-      if (response.data) {
-        toast.success('Rule modified successfully!');
-        setEditingRule(null);
-        setNewExpression('');
-        fetchRules();
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to update rule');
       }
+
+      await fetchRules(); // Refresh the rules list
+      setEditingRule(null);
+      setEditedExpression('');
+      
+      toast.success('Rule updated successfully!', {
+        icon: <CheckCircle2 className="text-green-500" />
+      });
     } catch (error) {
-      toast.error('Failed to modify rule: ' + (error.response?.data || error.message));
+      toast.error(error.message, {
+        icon: <AlertCircle className="text-red-500" />
+      });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
-  const handleDelete = async (ruleId) => {
-    if (window.confirm('Are you sure you want to delete this rule?')) {
-      try {
-        await axios.delete(`http://localhost:8080/api/rules/delete?ruleId=${ruleId}`);
-        toast.success('Rule deleted successfully!');
-        fetchRules();
-      } catch (error) {
-        toast.error('Failed to delete rule: ' + error.message);
+  const handleDelete = async () => {
+    if (!deleteConfirm) return;
+
+    try {
+      const response = await fetch(`http://localhost:8080/api/rules/delete?ruleId=${deleteConfirm.id}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete rule');
       }
+
+      toast.success('Rule deleted successfully!', {
+        icon: <CheckCircle2 className="text-green-500" />
+      });
+
+      await fetchRules();
+    } catch (error) {
+      toast.error(error.message, {
+        icon: <AlertCircle className="text-red-500" />
+      });
+    } finally {
+      setDeleteConfirm(null);
     }
   };
 
-  // Function to build expression string from AST
-  const buildExpression = (node) => {
-    if (!node) return '';
-    
-    if (node.type === 'operand') {
-      return node.value;
-    }
-    
-    const left = buildExpression(node.left);
-    const right = buildExpression(node.right);
-    
-    // Handle different operator types
-    if (node.type === 'operator') {
-      return `(${left} ${node.value} ${right})`;
-    }
-    
-    return '';
+  const handleCancelEdit = () => {
+    setEditingRule(null);
+    setEditedExpression('');
+    setError('');
   };
 
-  const handleEditClick = (rule) => {
-    setEditingRule(rule.id);
-    const currentExpression = buildExpression(rule.rootNode);
-    setNewExpression(currentExpression || '');
+  const renderRuleCard = (rule) => {
+    const isEditing = editingRule?.id === rule.id;
+
+    return (
+      <div key={rule.id} className="mb-4 p-4 border rounded-lg bg-white shadow-sm">
+        <div className="flex justify-between items-start">
+          <div className="flex-1">
+            <h3 className="font-medium text-lg">{rule.ruleName}</h3>
+            
+            {isEditing ? (
+              <div className="mt-4">
+                <textarea
+                  value={editedExpression}
+                  onChange={(e) => setEditedExpression(e.target.value)}
+                  className="w-full px-3 py-2 border rounded-md h-32 font-mono text-sm"
+                  placeholder="Enter rule expression"
+                />
+
+                {error && (
+                  <div className="mt-2 text-red-600">
+                    <AlertCircle className="inline-block mr-2" />
+                    {error}
+                  </div>
+                )}
+
+                <div className="flex space-x-2 mt-4">
+                  <button
+                    onClick={handleUpdate}
+                    disabled={isSubmitting}
+                    className="flex items-center px-3 py-1 bg-green-600 text-white rounded-md hover:bg-green-700"
+                  >
+                    {isSubmitting ? (
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    ) : (
+                      <Save className="h-4 w-4 mr-2" />
+                    )}
+                    Save
+                  </button>
+                  <button
+                    onClick={handleCancelEdit}
+                    className="flex items-center px-3 py-1 bg-gray-600 text-white rounded-md hover:bg-gray-700"
+                  >
+                    <X className="h-4 w-4 mr-2" />
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <pre className="mt-4 bg-gray-50 p-3 rounded-md overflow-x-auto text-sm font-mono">
+                {rule.ruleExpression}
+              </pre>
+            )}
+          </div>
+
+          {!isEditing && (
+            <div className="flex space-x-2 ml-4">
+              <button
+                onClick={() => handleEdit(rule)}
+                className="p-2 text-blue-600 hover:bg-blue-50 rounded-full transition-colors"
+                title="Edit rule"
+              >
+                <Pencil className="h-5 w-5" />
+              </button>
+              <button
+                onClick={() => setDeleteConfirm(rule)}
+                className="p-2 text-red-600 hover:bg-red-50 rounded-full transition-colors"
+                title="Delete rule"
+              >
+                <Trash2 className="h-5 w-5" />
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    );
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+      </div>
+    );
+  }
 
   return (
-    <div className="max-w-4xl mx-auto bg-white p-8 rounded-lg shadow">
-      <h2 className="text-2xl font-bold mb-6">Modify Rules</h2>
-      <div className="overflow-x-auto">
-        <table className="w-full">
-          <thead>
-            <tr className="bg-gray-100">
-              <th className="px-4 py-2 text-left">Rule Name</th>
-              <th className="px-4 py-2 text-left">Expression</th>
-              <th className="px-4 py-2 text-center">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rules.map(rule => (
-              <React.Fragment key={rule.id}>
-                <tr className="border-b">
-                  <td className="px-4 py-2">{rule.ruleName}</td>
-                  <td className="px-4 py-2">
-                    {rule.rootNode && (
-                      <div className="max-w-md overflow-hidden overflow-ellipsis">
-                        {buildExpression(rule.rootNode)}
-                      </div>
-                    )}
-                  </td>
-                  <td className="px-4 py-2 text-center">
-                    <button
-                      onClick={() => handleEditClick(rule)}
-                      className="text-blue-600 hover:text-blue-800 mr-2"
-                      title="Edit Rule"
-                    >
-                      <Pencil size={18} />
-                    </button>
-                    <button
-                      onClick={() => handleDelete(rule.id)}
-                      className="text-red-600 hover:text-red-800"
-                      title="Delete Rule"
-                    >
-                      <Trash2 size={18} />
-                    </button>
-                  </td>
-                </tr>
-                {editingRule === rule.id && (
-                  <tr className="bg-gray-50">
-                    <td colSpan="3" className="px-4 py-4">
-                      <div className="space-y-4">
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Edit Rule Expression
-                          </label>
-                          <textarea
-                            value={newExpression}
-                            onChange={(e) => setNewExpression(e.target.value)}
-                            className="w-full p-2 border rounded mb-2 min-h-[100px]"
-                            placeholder="Enter new rule expression (e.g., age > 30 AND salary > 50000)"
-                          />
-                        </div>
-                        <div className="flex justify-end space-x-2">
-                          <button
-                            onClick={() => {
-                              setEditingRule(null);
-                              setNewExpression('');
-                            }}
-                            className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 transition-colors"
-                          >
-                            Cancel
-                          </button>
-                          <button
-                            onClick={() => handleModify(rule.id)}
-                            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors"
-                          >
-                            Save Changes
-                          </button>
-                        </div>
-                      </div>
-                    </td>
-                  </tr>
-                )}
-              </React.Fragment>
-            ))}
-          </tbody>
-        </table>
+    <div className="max-w-4xl mx-auto p-6">
+      <div className="mb-4 p-4 border rounded-lg bg-white shadow-sm">
+        <div className="flex justify-between items-center">
+          <h2 className="text-xl font-semibold">Modify Rules</h2>
+          <button
+            onClick={fetchRules}
+            className="p-2 text-gray-600 hover:bg-gray-100 rounded-full"
+            title="Refresh rules"
+          >
+            <RotateCcw className="h-5 w-5" />
+          </button>
+        </div>
       </div>
+
+      {rules.length === 0 ? (
+        <p className="text-gray-500 text-center py-8">
+          No rules available. Create some rules first.
+        </p>
+      ) : (
+        <div className="space-y-4">
+          {rules.map(rule => renderRuleCard(rule))}
+        </div>
+      )}
+
+      {deleteConfirm && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg">
+            <h3 className="text-lg font-semibold">Delete Rule</h3>
+            <p className="mt-2 text-gray-600">
+              Are you sure you want to delete "{deleteConfirm.ruleName}"? This action cannot be undone.
+            </p>
+            <div className="flex justify-end mt-4 space-x-2">
+              <button
+                onClick={() => setDeleteConfirm(null)}
+                className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDelete}
+                className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
 
-export default ModifyRule;
+export default ModifyRulesPage;
